@@ -1,0 +1,144 @@
+#!/bin/bash
+
+function usage() {
+  cat <<EOF
+
+This application takes a bash script in a file, encrypts it using a license number
+  which is provided by the user (or it is randomly generated), and encapsulates it 
+  into a new bash script. 
+  
+  The result is a new script with your encrypted code, that can only be ran if you
+  have the proper license number.
+
+lsc <options> <executable script>
+
+  <executable script>       File that contains the executable script.
+  --appname | -N <appname>  Name for the new application (that will be the new
+                            executable file, and that file will search for the
+                            configuration files based on that name).
+                            e.g.
+                              /etc/<appname>.conf
+  --license | -l <license>  Uses the string <license> as a the license to encode
+                            the application.
+  --overwrite | -o          Overwrites the resulting script in case that it exists.
+  --quiet | -q              Quiet mode.
+  --help | -h               Shows this help and exits.
+EOF
+}
+
+function p_error() {
+  echo "$1" >&2
+  if [ "$2" != "" ]; then
+    exit $2
+  fi
+}
+
+function readconfig() {
+  local FILENAME="$1"
+  [ "$FILENAME" == "" -o ! -e "$FILENAME" ] && return 1
+  shift
+  local VARS=( $@ )
+  local NVARS=${#VARS[@]}
+  local CONFIG="`cat "$FILENAME" | sed 's/#.*//g' | sed 's/^[ \t]*//g' | sed 's/[ \t]*$//g' | sed '/^$/d'`"
+  local L n K V
+  while read L; do
+    if [[ "$L" =~ ^[a-zA-Z_][a-zA-Z0-9_]+=.*$ ]]; then
+      IFS='=' read K V <<< "$L"
+      for ((n=0;n<NVARS;n++)); do
+        [ "${VARS[$n]}" == "$K" ] && break
+      done
+      if [ $n -eq $NVARS ]; then
+        p_error "ignoring value for $K"
+      else
+        read $K <<< "$V"
+        export $K
+      fi
+    else
+      p_error "ignoring $L"
+    fi
+  done <<< "$CONFIG"
+}
+
+while [ $# -gt 0 ]; do
+  case $1 in
+    --quiet|-q)   QUIET=1;;
+    --appname|-N) shift
+                  APPNAME="$1";;
+    --license|-l) shift
+                  LICENSE="$1";;
+    --overwrite|-y) OVERWRITE=1;;
+    --help|-h)    usage && exit 0;;
+    *)            if [ "$FILETOLICENSE" == "" ]; then
+                    FILETOLICENSE="$1"
+                  else
+                    p_error "invalid parameter $1"
+                    exit 1
+                  fi;;
+  esac
+  shift
+done
+
+# Read the license from the environment or from a config file
+CONFIGFILES="etc/lsc.conf etc/lsc/lsc.conf $HOME/.lsc.conf /etc/lsc.conf /etc/lsc/lsc.conf /etc/default/lsc.conf"
+for CF in $CONFIGFILES; do
+  readconfig "$CF" TEMPLATE
+  if [ "$TEMPLATE" != "" ]; then
+    p_error "using template '$TEMPLATE' found in file $CF"
+    break
+  fi
+done
+
+# Check whether the template exists or not
+[ ! -e "$TEMPLATE" ] && p_error "the template '$TEMPLATE' does not exist" 1
+
+# Check the new APP name (the new executable)
+[ "$APPNAME" == "" ] && p_error "no appname set" 1
+[[ ! "$APPNAME" =~ ^[A-Za-z0-9]*$ ]] && p_error "the name $APPNAME is not a valid name for an application" 1
+Q_OVERWRITE=y
+if [ -e "$APPNAME" -a "$OVERWRITE" != "1" ]; then
+  read -p "Overwrite existing file $APPNAME? (y/N) " Q_OVERWRITE
+  [ "$Q_OVERWRITE" != "y" ] && p_error "Not overwritting existing file $APPNAME" 0
+fi
+[ "$Q_OVERWRITE" != "y" ] && p_error "nothing to do" 0
+
+# Check whether the file to license is valid or not
+[ "$FILETOLICENSE" == "" ] && echo "no file to license (no work)" && exit 0
+[ ! -e "$FILETOLICENSE" ] && p_error "file $FILETOLICENSE does not exist" 0
+
+# Generate a new license number
+LICENSE="${LICENSE:-$(cat /proc/sys/kernel/random/uuid)}"
+[[ ! "$LICENSE" =~ ^[a-zA-Z0-9_-]*$ ]] && p_error "license number '$LICENSE' is not valid" 1
+
+# Encode the code
+CODECODED="$(cat "$FILETOLICENSE" | gzip | openssl enc -aes-256-cbc -in /dev/stdin -out /dev/stdout -k "$LICENSE" | base64 | tr -d '\n')"
+
+# Put the things in the template (appname and code)
+cat "$TEMPLATE" | sed "s|<<APPNAME>>|$APPNAME|g" | sed "s|<<CODE>>|$CODECODED|" > "$APPNAME"
+chmod +x "$APPNAME"
+
+# Output the license number
+echo "$LICENSE"
+
+[ "$QUIET" == "1" ] && exit 0
+cat << EOT
+
+Your new licensed application has been generated in file '$APPNAME'.
+Please take note of your license number, because you need it to run
+your application. The license number is unique for that application.
+Have in mind that if you lose that license, your application will be 
+unusable.
+
+In order to run your application, you can use the next command:
+
+LICENSE=$LICENSE ./$APPNAME
+
+Otherwise you can create a config file in a common configuration place
+and put the next content:
+
+LICENSE=$LICENSE
+
+e.g. 
+  /etc/${APPNAME}.conf
+  ~/.${APPNAME}.conf
+EOT
+

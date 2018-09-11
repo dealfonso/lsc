@@ -1,0 +1,60 @@
+#!/bin/bash
+
+function p_error() {
+  echo "$@" >&2
+}
+
+function readconfig() {
+  local FILENAME="$1"
+  [ "$FILENAME" == "" -o ! -e "$FILENAME" ] && return 1
+  shift
+  local VARS=( $@ )
+  local NVARS=${#VARS[@]}
+  local CONFIG="`cat "$FILENAME" | sed 's/#.*//g' | sed 's/^[ \t]*//g' | sed 's/[ \t]*$//g' | sed '/^$/d'`"
+  local L n K V
+  while read L; do
+    if [[ "$L" =~ ^[a-zA-Z_][a-zA-Z0-9_]+=.*$ ]]; then
+      IFS='=' read K V <<< "$L"
+      for ((n=0;n<NVARS;n++)); do
+        [ "${VARS[$n]}" == "$K" ] && break
+      done
+      if [ $n -eq $NVARS ]; then
+        p_error "ignoring value for $K"
+      else
+        read $K <<< "$V"
+        export $K
+      fi
+    else
+      p_error "ignoring $L"
+    fi
+  done <<< "$CONFIG"
+}
+
+# Read the license from the environment or from a config file
+if [ "$LICENSE" == "" ]; then
+  CONFIGFILES="etc/<<APPNAME>>.conf etc/<<APPNAME>>/<<APPNAME>>.conf $HOME/.<<APPNAME>>.conf /etc/<<APPNAME>>.conf /etc/<<APPNAME>>/<<APPNAME>>.conf /etc/default/<<APPNAME>>.conf"
+  for CF in $CONFIGFILES; do
+    readconfig "$CF" LICENSE
+    if [ "$LICENSE" != "" ]; then
+      p_error "license found in file $CF"
+      break
+    fi
+  done
+else
+  p_error "license from environment"
+fi
+
+# The encoded code
+LICENSEDCODE="<<CODE>>"
+
+# Decode the code
+PLAINCODE="$(echo "$LICENSEDCODE" | base64 -d 2> /dev/null | openssl enc -d -aes-256-cbc -in /dev/stdin -out /dev/stdout -k "$LICENSE" 2> /dev/null | gunzip 2> /dev/null) "
+
+# If any error occurred, we'll assume that there is a problem with the license
+if [ $? -ne 0 ]; then
+  p_error "license number is not valid"
+  exit 1
+fi
+
+# Execute the code
+eval "$PLAINCODE"

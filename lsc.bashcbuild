@@ -1,0 +1,18 @@
+PACKAGE=lsc
+VERSION=0.1
+SUMMARY="LSC - License Shell Code, generates applications that need a license number to be run"
+LICENSE="Apache 2.0"
+URL="https://github.com/dealfonso/lsc"
+DESCRIPTION="This application takes a bash script in a file, encrypts it using a license number which \
+is provided by the user (or it is randomly generated), and encapsulates it \
+into a new bash script.\
+The result is a new script with your encrypted code, that can only be ran if you \
+have the proper license number. More info at $URL"
+PACKAGER="Carlos de Alfonso <calfonso@upv.es>"
+# DEPENDS is for DEB packages
+DEPENDS="bash, openssl, coreutils, gzip, sed"
+# REQUIRES is for RPM packages
+REQUIRES="bash openssl coreutils sed gzip"
+
+/etc/lsc/;etc/lsc/lsc.conf:lsce.template
+/usr/bin/;lsc
