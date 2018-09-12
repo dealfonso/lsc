@@ -65,6 +65,7 @@ while [ $# -gt 0 ]; do
     --appname|-N) shift
                   APPNAME="$1";;
     --license|-l) shift
+                  LICENSEPROVIDED=true
                   LICENSE="$1";;
     --overwrite|-y) OVERWRITE=1;;
     --help|-h)    usage && exit 0;;
@@ -106,7 +107,9 @@ fi
 [ ! -e "$FILETOLICENSE" ] && p_error "file $FILETOLICENSE does not exist" 0
 
 # Generate a new license number
-LICENSE="${LICENSE:-$(cat /proc/sys/kernel/random/uuid)}"
+if [ "$LICENSEPROVIDED" != "true" ]; then
+  LICENSE="${LICENSE:-$(cat /proc/sys/kernel/random/uuid)}"
+fi
 [[ ! "$LICENSE" =~ ^[a-zA-Z0-9_-]*$ ]] && p_error "license number '$LICENSE' is not valid" 1
 
 # Encode the code
