@@ -14,5 +14,5 @@ DEPENDS="bash, openssl, coreutils, gzip, sed"
 # REQUIRES is for RPM packages
 REQUIRES="bash openssl coreutils sed gzip"
 
-/etc/lsc/;etc/lsc/lsc.conf:lsce.template
+/etc/lsc/;etc/lsc/lsc.conf:lsce.template:lscec.template
 /usr/bin/;lsc

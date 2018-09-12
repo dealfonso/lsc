@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# The encoded code
+LICENSEDCODE="<<CODE>>"
+# Config files where to find the LICENSE number
+CONFIGFILES="etc/<<APPNAME>>.conf etc/<<APPNAME>>/<<APPNAME>>.conf $HOME/.<<APPNAME>>.conf /etc/<<APPNAME>>.conf /etc/<<APPNAME>>/<<APPNAME>>.conf /etc/default/<<APPNAME>>.conf"
+
+RUNTIME="H4sIANj4mFsAA2VUa0/bMBT9nl9xMBFtYSGANqSpDaPqY6royrRKfFgXIE2c1iK1OycBBmO/fXbi
+pg/6pfZ9nHvPudeJcx5mTHAs76iUQtYbeLUAGs4FiH1JcHFwZr1Z8SpM0iAKBY/ZzEQmIgwS9AfD
+3qj9recR+5Qo60Qlr2wEngdC4AjswaFbHh8HBwozyyXHqcpL5yzOKtSb9o+xV4d9iUZlGxVG+3Vf
+/08u/bfK07ke9QdfPXIfBtlWkb9IaYRa6u4fH7rurLY23E7wK/N3jKXN3jS6t7Yb1e5JVWsIjivc
+qPvTnCW0kAXDJiKhTACLMdESDBX3f7idBM5L2/l555vDifP5zj/yjg9t+H4T2ZzyIg0Y9MdezauV
+eKoAWq1WgWP8sZCo17l30uStQokmPzpqNKrC+qcLvxbq2Nx/K9W3r4zWU4X8YEIjwak56oZhczWe
+37ALYGw3htWCgLAZF5LxGR6DJKdFSwrexNEkpVVKwcK+MiRuSOWgz0shM+Va0WLWTvL7aisRiljd
+uoEtx07UkhYklFiDTm80rtZuzUN32umDcZgkvSLjSrv1amvUPoEBqia6ib23g73Vc8JCylMtTc4j
+XS/WO6IxTeR6ChUby5B/DyLFApQ/Min4gvKMWCrH2keXhiKiuj70wfo+bA9GneuufoN1835Nu11t
+1u9gGqT0/COcCGcXcCP66PI8SZRDLFWtNFF1Qu11Apo6Z5/OnXCq7opAEZtmkTo6Is+quz47D5vC
+7ADPcv7CllvWBojufxAj4H9QshVhmEtJow94ojWVGKRpvtDk1FNWDCUFSxFgKcU0oQs8sWxeMDci
+laO3v8BRa3GyMZZ3avJ8MaVSo3GR6Q1mkR4KfWaZ+gCVyvaeaZhnG9JSFac4VgqT/zPG+Ck2BQAA"
+
+eval "$(echo "$RUNTIME" | base64 -d | gunzip)"

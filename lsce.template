@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# The encoded code
+LICENSEDCODE="<<CODE>>"
+# Config files where to find the LICENSE number
+CONFIGFILES="etc/<<APPNAME>>.conf etc/<<APPNAME>>/<<APPNAME>>.conf $HOME/.<<APPNAME>>.conf /etc/<<APPNAME>>.conf /etc/<<APPNAME>>/<<APPNAME>>.conf /etc/default/<<APPNAME>>.conf"
+
 function p_error() {
   echo "$@" >&2
 }
@@ -32,7 +37,6 @@ function readconfig() {
 
 # Read the license from the environment or from a config file
 if [ "$LICENSE" == "" ]; then
-  CONFIGFILES="etc/<<APPNAME>>.conf etc/<<APPNAME>>/<<APPNAME>>.conf $HOME/.<<APPNAME>>.conf /etc/<<APPNAME>>.conf /etc/<<APPNAME>>/<<APPNAME>>.conf /etc/default/<<APPNAME>>.conf"
   for CF in $CONFIGFILES; do
     readconfig "$CF" LICENSE
     if [ "$LICENSE" != "" ]; then
@@ -44,11 +48,8 @@ else
   p_error "license from environment"
 fi
 
-# The encoded code
-LICENSEDCODE="<<CODE>>"
-
 # Decode the code
-PLAINCODE="$(echo "$LICENSEDCODE" | base64 -d 2> /dev/null | openssl enc -d -aes-256-cbc -in /dev/stdin -out /dev/stdout -k "$LICENSE" 2> /dev/null | gunzip 2> /dev/null) "
+LICENSEDCODE="$(echo "$LICENSEDCODE" | base64 -d 2> /dev/null | openssl enc -d -aes-256-cbc -in /dev/stdin -out /dev/stdout -k "$LICENSE" 2> /dev/null | gunzip 2> /dev/null) "
 
 # If any error occurred, we'll assume that there is a problem with the license
 if [ $? -ne 0 ]; then
@@ -57,4 +58,4 @@ if [ $? -ne 0 ]; then
 fi
 
 # Execute the code
-eval "$PLAINCODE"
+eval "$LICENSEDCODE"
