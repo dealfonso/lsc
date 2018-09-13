@@ -2,6 +2,7 @@
 
 # The encoded code
 LICENSEDCODE="<<CODE>>"
+
 # Config files where to find the LICENSE number
 CONFIGFILES="etc/<<APPNAME>>.conf etc/<<APPNAME>>/<<APPNAME>>.conf $HOME/.<<APPNAME>>.conf /etc/<<APPNAME>>.conf /etc/<<APPNAME>>/<<APPNAME>>.conf /etc/default/<<APPNAME>>.conf"
 

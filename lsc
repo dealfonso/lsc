@@ -113,10 +113,10 @@ fi
 [[ ! "$LICENSE" =~ ^[a-zA-Z0-9_-]*$ ]] && p_error "license number '$LICENSE' is not valid" 1
 
 # Encode the code
-CODECODED="$(cat "$FILETOLICENSE" | gzip | openssl enc -aes-256-cbc -in /dev/stdin -out /dev/stdout -k "$LICENSE" | base64 | tr -d '\n')"
+CODECODED="$(cat "$FILETOLICENSE" | gzip | openssl enc -aes-256-cbc -salt -in /dev/stdin -out /dev/stdout -k "$LICENSE" | base64 | sed ':a;N;$!ba;s/\n/<<NEWLINE>>/g')"
 
 # Put the things in the template (appname and code)
-cat "$TEMPLATE" | sed "s|<<APPNAME>>|$APPNAME|g" | sed "s|<<CODE>>|$CODECODED|" > "$APPNAME"
+cat "$TEMPLATE" | sed "s|<<APPNAME>>|$APPNAME|g" | sed "s|<<CODE>>|$CODECODED|" | sed 's|<<NEWLINE>>|\n|g' > "$APPNAME"
 chmod +x "$APPNAME"
 
 # Output the license number
